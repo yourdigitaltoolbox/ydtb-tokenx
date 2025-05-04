@@ -48,22 +48,30 @@ export async function generateFromTemplate(preselected?: string, skipClipboard: 
     };
 
     if (Array.isArray(tokenFile)) {
+        let isFirst = true; // Flag to track the first iteration
         for (const set of tokenFile) {
-            await input({ message: 'Press enter to copy the next version to your clipboard.' });
             const rendered = replaceTokens(template, set);
             if (!skipClipboard) {
                 clipboard.writeSync(JSON.stringify(rendered, null, 2));
-                console.log('📋 Copied next variation to clipboard.');
+                if (isFirst) {
+                    console.log('✅ The first template has been added to your clipboard.');
+                    isFirst = false; // Set the flag to false after the first iteration
+                } else {
+                    console.log('📋 Copied next variation to clipboard.');
+                }
             } else {
                 console.log(JSON.stringify(rendered, null, 2));
             }
+            await input({ message: 'Press enter to copy the next version to your clipboard.' });
         }
     } else {
         const rendered = replaceTokens(template, tokenFile);
         if (!skipClipboard) {
             clipboard.writeSync(JSON.stringify(rendered, null, 2));
+            console.log('✅ Template successfully copied to clipboard:');
             console.log('📋 Copied template with tokens replaced to clipboard.');
         } else {
+            console.log('✅ Template successfully generated:');
             console.log(JSON.stringify(rendered, null, 2));
         }
     }
