@@ -1,9 +1,9 @@
 import { input, select } from '@inquirer/prompts';
 import clipboard from 'clipboardy';
 import { readFile } from 'fs/promises';
-import { join } from 'path';
 import { existsSync } from 'fs';
 import { filterValidTemplates } from './filterValidTemplates';
+import { getTemplatePaths } from './pathUtils';
 
 export async function generateFromTemplate(preselected?: string, skipClipboard: boolean = false) {
     const folders = await filterValidTemplates();
@@ -21,61 +21,97 @@ export async function generateFromTemplate(preselected?: string, skipClipboard: 
         });
     }
 
-    const templatePath = join(process.cwd(), baseName, `${baseName}.template.json`);
-    const tokenPath = join(process.cwd(), baseName, `${baseName}.tokens.json`);
+    const { templatePath, tokenPath } = getTemplatePaths(baseName);
 
     if (!existsSync(templatePath) || !existsSync(tokenPath)) {
         console.error(`❌ Required files not found for template '${baseName}'.`);
         process.exit(1);
     }
 
-    const originalTemplate = JSON.parse(await readFile(templatePath, 'utf-8')); // Keep a copy of the original template
+    const originalTemplate = JSON.parse(await readFile(templatePath, 'utf-8'));
     const tokenFile = JSON.parse(await readFile(tokenPath, 'utf-8'));
 
+    // Validate the parsed JSON
+    if (typeof originalTemplate !== 'object' || originalTemplate === null) {
+        console.error("❌ Invalid original template:", originalTemplate);
+        process.exit(1);
+    }
+
+    if (typeof tokenFile !== 'object' || tokenFile === null) {
+        console.error("❌ Invalid token file:", tokenFile);
+        process.exit(1);
+    }
+
+    const escapeRegExp = (string: string): string => {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape special characters for RegExp
+    };
+
+    const escapeJSONString = (string: string): string => {
+        return string.replace(/\\/g, '\\\\') // Escape backslashes
+            .replace(/"/g, '\\"')  // Escape double quotes
+            .replace(/\n/g, '\\n') // Escape newlines
+            .replace(/\r/g, '\\r') // Escape carriage returns
+            .replace(/\t/g, '\\t'); // Escape tabs
+    };
+
     const replaceTokens = (data: any, map: Record<string, string>): any => {
-        const stringifiedData = JSON.stringify(data);
-        const replacedData = Object.keys(map).reduce((result, token) => {
-            const tokenPlaceholder = `${token}`;
-            return result.replace(new RegExp(tokenPlaceholder, 'g'), map[token]);
-        }, stringifiedData);
-        return JSON.parse(replacedData);
+        try {
+            // Validate token map values
+            Object.values(map).forEach((value) => {
+                if (typeof value !== 'string') {
+                    console.error("❌ Invalid token value:", value);
+                    throw new Error("Token values must be strings.");
+                }
+            });
+
+            const stringifiedData = JSON.stringify(data);
+            const replacedData = Object.keys(map).reduce((result, token) => {
+                const tokenPlaceholder = escapeRegExp(token); // Escape token for RegExp
+                const escapedReplacement = escapeJSONString(map[token]); // Escape replacement string
+                return result.replace(new RegExp(tokenPlaceholder, 'g'), escapedReplacement);
+            }, stringifiedData);
+
+            return JSON.parse(replacedData);
+        } catch (error) {
+            console.error("❌ Error during token replacement:", error);
+            console.error("Data being processed:", data);
+            console.error("Token map:", map);
+            throw error;
+        }
     };
 
     if (Array.isArray(tokenFile)) {
-        let isFirst = true; // Flag to track the first iteration
+        let isFirst = true;
         for (const set of tokenFile) {
-            const rendered = replaceTokens(originalTemplate, set); // Use the original template for each iteration
-
-            console.log(set);
+            const rendered = replaceTokens(originalTemplate, set);
 
             if (!skipClipboard) {
-                const stringified = JSON.stringify(rendered); // Stringify without newlines or formatting
+                const stringified = JSON.stringify(rendered);
                 clipboard.writeSync(stringified);
 
                 if (isFirst) {
                     console.log('✅ The first template has been added to your clipboard.');
-                    isFirst = false; // Set the flag to false after the first iteration
+                    isFirst = false;
                 } else {
                     console.log('📋 Copied next variation to clipboard.');
                 }
             } else {
-                console.log(JSON.stringify(rendered, null, 2)); // Pretty print to console
+                console.log(JSON.stringify(rendered, null, 2));
             }
 
-            // Prompt the user only after handling the clipboard or console output
             if (!isFirst) {
                 await input({ message: 'Press enter to copy the next version to your clipboard.' });
             }
         }
     } else {
-        const rendered = replaceTokens(originalTemplate, tokenFile); // Use the original template
+        const rendered = replaceTokens(originalTemplate, tokenFile);
         if (!skipClipboard) {
-            const stringified = JSON.stringify(rendered); // Stringify without newlines or formatting
+            const stringified = JSON.stringify(rendered);
             clipboard.writeSync(stringified);
             console.log('✅ Template successfully copied to clipboard:');
         } else {
             console.log('✅ Template successfully generated:');
-            console.log(JSON.stringify(rendered, null, 2)); // Pretty print to console
+            console.log(JSON.stringify(rendered, null, 2));
         }
     }
 }

@@ -1,6 +1,6 @@
 import { readdir } from 'fs/promises';
-import { join } from 'path';
 import { existsSync } from 'fs';
+import { getDataFolder, getTemplatePaths } from './pathUtils';
 
 /**
  * Filters valid template folders in the current working directory.
@@ -9,15 +9,16 @@ import { existsSync } from 'fs';
  * @param excludedFolders - List of folder names to exclude.
  * @returns Array of valid template folder names.
  */
-export async function filterValidTemplates(excludedFolders: string[] = ['node_modules', 'lib', '.git']): Promise<string[]> {
-    const folders = await readdir(process.cwd(), { withFileTypes: true });
+export async function filterValidTemplates(excludedFolders: string[] = []): Promise<string[]> {
+    const dataFolder = getDataFolder();
+    const folders = await readdir(dataFolder, { withFileTypes: true });
 
     return folders
         .filter((entry) => entry.isDirectory() && !excludedFolders.includes(entry.name))
         .map((entry) => entry.name)
         .filter((name) => {
-            const templatePath = join(process.cwd(), name, `${name}.template.json`);
-            const tokenPath = join(process.cwd(), name, `${name}.tokens.json`);
+            console.log(`Checking template folder: ${name}`);
+            const { templatePath, tokenPath } = getTemplatePaths(name);
             return existsSync(templatePath) && existsSync(tokenPath);
         });
 }

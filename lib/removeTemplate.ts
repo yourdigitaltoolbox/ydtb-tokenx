@@ -2,6 +2,7 @@ import { select, confirm } from '@inquirer/prompts';
 import { rm } from 'fs/promises';
 import { join } from 'path';
 import { filterValidTemplates } from './filterValidTemplates';
+import { getTemplatePaths, getDataFolder } from './pathUtils';
 
 export async function removeTemplate(preselected?: string) {
     const folders = await filterValidTemplates();
@@ -12,19 +13,14 @@ export async function removeTemplate(preselected?: string) {
     }
 
     let baseName = preselected;
-    if (baseName && !folders.includes(baseName)) {
-        console.warn(`⚠️ Template '${baseName}' not found. Falling back to template selection.`);
-        baseName = undefined;
-    }
-
-    if (!baseName) {
+    if (!baseName || !folders.includes(baseName)) {
         baseName = await select({
             message: 'Select a template to remove:',
             choices: folders.map((name) => ({ name, value: name })),
         });
     }
 
-    const dir = join(process.cwd(), baseName);
+    const dir = join(getDataFolder(), baseName);
     const confirmDelete = await confirm({ message: `Are you sure you want to delete the template '${baseName}'? This action cannot be undone.` });
 
     if (confirmDelete) {

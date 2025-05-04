@@ -1,7 +1,7 @@
 import { select } from '@inquirer/prompts';
-import { join } from 'path';
 import { tokenReplacementLoop } from './tokenReplacementLoop';
 import { filterValidTemplates } from './filterValidTemplates';
+import { getTemplatePaths } from './pathUtils';
 
 export async function promptTemplateRework(preselected?: string) {
     const folders = await filterValidTemplates();
@@ -24,8 +24,7 @@ export async function promptTemplateRework(preselected?: string) {
         });
     }
 
-    const templatePath = join(process.cwd(), baseName, `${baseName}.template.json`);
-    const tokenPath = join(process.cwd(), baseName, `${baseName}.tokens.json`);
+    const { templatePath, tokenPath } = getTemplatePaths(baseName);
 
-    await tokenReplacementLoop(templatePath, tokenPath);
+    await tokenReplacementLoop(baseName);
 }

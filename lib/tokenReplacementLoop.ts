@@ -1,7 +1,10 @@
 import { input, confirm } from '@inquirer/prompts';
 import { writeFile, readFile } from 'fs/promises';
+import { getTemplatePaths } from './pathUtils';
 
-export async function tokenReplacementLoop(templatePath: string, tokenPath: string) {
+export async function tokenReplacementLoop(baseName: string) {
+    const { templatePath, tokenPath } = getTemplatePaths(baseName);
+
     let template = JSON.parse(await readFile(templatePath, 'utf-8'));
     let tokens: Record<string, string> = JSON.parse(await readFile(tokenPath, 'utf-8'));
     let tokenCount = Object.keys(tokens).length;

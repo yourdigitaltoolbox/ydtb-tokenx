@@ -1,11 +1,10 @@
 import { input, confirm } from '@inquirer/prompts';
 import clipboard from 'clipboardy';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import { writeFile } from 'fs/promises';
 
 import { tokenReplacementLoop } from './tokenReplacementLoop';
 import { promptTemplateRework } from './promptTemplateRework';
+import { getTemplatePaths } from './pathUtils';
 
 
 export async function createNewTemplateFromClipboard() {
@@ -28,11 +27,11 @@ export async function createNewTemplateFromClipboard() {
         return;
     }
 
-    // Step 1.1: Validate JSON structure
-    if (parsedJSON.type !== "elementor") {
-        console.warn("⚠️ JSON does not have 'type' set to 'elementor'. Exiting...");
-        process.exit(1);
-    }
+    // // Step 1.1: Validate JSON structure
+    // if (parsedJSON.type !== "elementor") {
+    //     console.warn("⚠️ JSON does not have 'type' set to 'elementor'. Exiting...");
+    //     process.exit(1);
+    // }
 
     // Step 1.2: Clean htmlCache
     cleanHtmlCache(parsedJSON);
@@ -44,24 +43,16 @@ export async function createNewTemplateFromClipboard() {
         process.exit(1);
     }
 
-    // Step 3: Create folder and write files
-    const dir = join(process.cwd(), baseName);
-    if (!existsSync(dir)) {
-        await mkdir(dir);
-    }
-
-    const rawPath = join(dir, `${baseName}-original.json`);
-    const templatePath = join(dir, `${baseName}.template.json`);
-    const tokenPath = join(dir, `${baseName}.tokens.json`);
+    // Step 3: Get paths and create folder if necessary
+    const { rawPath, templatePath, tokenPath } = getTemplatePaths(baseName);
 
     await writeFile(rawPath, JSON.stringify(parsedJSON, null, 2));
     await writeFile(templatePath, JSON.stringify(parsedJSON, null, 2));
     await writeFile(tokenPath, JSON.stringify({}, null, 2));
 
-    console.log(`✅ Files created in ./${baseName}/`);
+    console.log(`✅ Files created in ./data/`);
     console.log(`📝 Now ready to tokenize your template.`);
-
-    await tokenReplacementLoop(templatePath, tokenPath);
+    await tokenReplacementLoop(baseName); // Pass only the baseName
 }
 
 export function cleanHtmlCache(obj: any): void {
