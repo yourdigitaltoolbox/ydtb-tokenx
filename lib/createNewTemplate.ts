@@ -7,6 +7,7 @@ import { existsSync } from 'fs';
 import { tokenReplacementLoop } from './tokenReplacementLoop';
 import { promptTemplateRework } from './promptTemplateRework';
 
+
 export async function createNewTemplateFromClipboard() {
     // Step 1: Grab clipboard contents
     const clipboardText = clipboard.readSync();
@@ -26,6 +27,15 @@ export async function createNewTemplateFromClipboard() {
         await promptTemplateRework();
         return;
     }
+
+    // Step 1.1: Validate JSON structure
+    if (parsedJSON.type !== "elementor") {
+        console.warn("⚠️ JSON does not have 'type' set to 'elementor'. Exiting...");
+        process.exit(1);
+    }
+
+    // Step 1.2: Clean htmlCache
+    cleanHtmlCache(parsedJSON);
 
     // Step 2: Prompt for name
     const baseName = await input({ message: 'Enter a name for this widget/template:' });
@@ -52,4 +62,16 @@ export async function createNewTemplateFromClipboard() {
     console.log(`📝 Now ready to tokenize your template.`);
 
     await tokenReplacementLoop(templatePath, tokenPath);
+}
+
+export function cleanHtmlCache(obj: any): void {
+    if (typeof obj === "object" && obj !== null) {
+        for (const key in obj) {
+            if (key === "htmlCache") {
+                obj[key] = null; // Set htmlCache to null
+            } else if (typeof obj[key] === "object") {
+                cleanHtmlCache(obj[key]); // Recursively clean nested objects
+            }
+        }
+    }
 }

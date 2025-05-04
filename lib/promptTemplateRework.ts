@@ -1,19 +1,10 @@
 import { select } from '@inquirer/prompts';
-import { readdir } from 'fs/promises';
 import { join } from 'path';
-import { existsSync } from 'fs';
 import { tokenReplacementLoop } from './tokenReplacementLoop';
-
+import { filterValidTemplates } from './filterValidTemplates';
 
 export async function promptTemplateRework(preselected?: string) {
-    const folders = (await readdir(process.cwd(), { withFileTypes: true }))
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => entry.name)
-        .filter((name) => {
-            const templatePath = join(process.cwd(), name, `${name}.template.json`);
-            const tokenPath = join(process.cwd(), name, `${name}.tokens.json`);
-            return existsSync(templatePath) && existsSync(tokenPath);
-        });
+    const folders = await filterValidTemplates();
 
     if (folders.length === 0) {
         console.error("❌ No valid templates found in this directory.");

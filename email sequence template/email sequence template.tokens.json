@@ -1,0 +1,23 @@
+[
+  {
+    "%text1%": "<p>🟢 Welcome Sequence</p>",
+    "%text2%": "<p>A Welcome Sequence is your digital first impression — it’s what greets new subscribers right after they opt in. This short series of emails sets expectations, introduces your brand voice, and provides a clear roadmap for what’s ahead. Whether you’re offering a lead magnet or just a warm hello, the Welcome Sequence builds trust fast and prevents people from forgetting why they joined your list in the first place.</p>",
+    "%text3%": "<b>Purpose:</b> Introduce your brand and set expectations.",
+    "%text4%": "<b>When:</b> Immediately after opt-in or lead magnet download.",
+    "%text5%": "<b>Example Topic:</b> \"Here's What to Expect + A Gift Inside\""
+  },
+  {
+    "%text1%": "<p>🟢 Nurture Sequence</p>",
+    "%text2%": "<p>The Nurture Sequence is like the steady heartbeat of your email list. After the welcome, it’s your chance to build real connection by offering value through tips, stories, and insights—without constantly pitching. These emails help your subscribers get to know you, trust your expertise, and stay engaged with your brand until they’re ready to buy.</p>",
+    "%text3%": "<b>Purpose:</b> Build trust and deepen the relationship through consistent value.",
+    "%text4%": "<b>When:</b> After the welcome sequence or between launches.",
+    "%text5%": "<b>Example Topic:</b> \"The 5 Mistakes I Made Starting Out (And How You Can Avoid Them)\""
+  },
+  {
+    "%text1%": "<p>🟢 Seinfeld Sequence</p>",
+    "%text2%": "<p>Inspired by the TV show 'about nothing,' the Seinfeld Sequence is all about personality-driven content that entertains, shares relatable stories, and subtly ties into your brand or offer. These emails aren’t focused on hard selling—they’re designed to keep your audience engaged and thinking of you, even when you’re not launching.</p>",
+    "%text3%": "<b>Purpose:</b> Stay top-of-mind and build brand affinity through entertainment and storytelling.",
+    "%text4%": "<b>When:</b> Ongoing, after initial nurture or between promotions.",
+    "%text5%": "<b>Example Topic:</b> \"What a Broken Blender Taught Me About Focus\""
+  }
+]

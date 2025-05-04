@@ -1,9 +1,12 @@
 {
-  "name": "editwidget",
-  "module": "index.ts",
+  "name": "ydtb-tokenx",
+  "module": "cli.ts",
   "type": "module",
   "devDependencies": {
     "@types/bun": "latest"
+  },
+  "bin": {
+    "tokenx": "./cli.ts"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

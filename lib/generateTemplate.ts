@@ -1,13 +1,17 @@
 import { input, select } from '@inquirer/prompts';
 import clipboard from 'clipboardy';
-import { readFile, readdir } from 'fs/promises';
+import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { filterValidTemplates } from './filterValidTemplates';
 
 export async function generateFromTemplate(preselected?: string, skipClipboard: boolean = false) {
-    const folders = (await readdir(process.cwd(), { withFileTypes: true }))
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => entry.name);
+    const folders = await filterValidTemplates();
+
+    if (folders.length === 0) {
+        console.error("❌ No valid templates found in this directory.");
+        process.exit(1);
+    }
 
     let baseName = preselected;
     if (!baseName || !folders.includes(baseName)) {
