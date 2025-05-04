@@ -29,30 +29,29 @@ export async function generateFromTemplate(preselected?: string, skipClipboard: 
         process.exit(1);
     }
 
-    const template = JSON.parse(await readFile(templatePath, 'utf-8'));
+    const originalTemplate = JSON.parse(await readFile(templatePath, 'utf-8')); // Keep a copy of the original template
     const tokenFile = JSON.parse(await readFile(tokenPath, 'utf-8'));
 
     const replaceTokens = (data: any, map: Record<string, string>): any => {
-        if (Array.isArray(data)) return data.map(item => replaceTokens(item, map));
-        if (typeof data === 'object' && data !== null) {
-            const result: any = {};
-            for (const key in data) {
-                result[key] = replaceTokens(data[key], map);
-            }
-            return result;
-        }
-        if (typeof data === 'string' && tokenFile[data]) {
-            return tokenFile[data];
-        }
-        return data;
+        const stringifiedData = JSON.stringify(data);
+        const replacedData = Object.keys(map).reduce((result, token) => {
+            const tokenPlaceholder = `${token}`;
+            return result.replace(new RegExp(tokenPlaceholder, 'g'), map[token]);
+        }, stringifiedData);
+        return JSON.parse(replacedData);
     };
 
     if (Array.isArray(tokenFile)) {
         let isFirst = true; // Flag to track the first iteration
         for (const set of tokenFile) {
-            const rendered = replaceTokens(template, set);
+            const rendered = replaceTokens(originalTemplate, set); // Use the original template for each iteration
+
+            console.log(set);
+
             if (!skipClipboard) {
-                clipboard.writeSync(JSON.stringify(rendered, null, 2));
+                const stringified = JSON.stringify(rendered); // Stringify without newlines or formatting
+                clipboard.writeSync(stringified);
+
                 if (isFirst) {
                     console.log('✅ The first template has been added to your clipboard.');
                     isFirst = false; // Set the flag to false after the first iteration
@@ -60,19 +59,23 @@ export async function generateFromTemplate(preselected?: string, skipClipboard: 
                     console.log('📋 Copied next variation to clipboard.');
                 }
             } else {
-                console.log(JSON.stringify(rendered, null, 2));
+                console.log(JSON.stringify(rendered, null, 2)); // Pretty print to console
             }
-            await input({ message: 'Press enter to copy the next version to your clipboard.' });
+
+            // Prompt the user only after handling the clipboard or console output
+            if (!isFirst) {
+                await input({ message: 'Press enter to copy the next version to your clipboard.' });
+            }
         }
     } else {
-        const rendered = replaceTokens(template, tokenFile);
+        const rendered = replaceTokens(originalTemplate, tokenFile); // Use the original template
         if (!skipClipboard) {
-            clipboard.writeSync(JSON.stringify(rendered, null, 2));
+            const stringified = JSON.stringify(rendered); // Stringify without newlines or formatting
+            clipboard.writeSync(stringified);
             console.log('✅ Template successfully copied to clipboard:');
-            console.log('📋 Copied template with tokens replaced to clipboard.');
         } else {
             console.log('✅ Template successfully generated:');
-            console.log(JSON.stringify(rendered, null, 2));
+            console.log(JSON.stringify(rendered, null, 2)); // Pretty print to console
         }
     }
 }
