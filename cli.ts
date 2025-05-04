@@ -7,6 +7,7 @@ import { printHelp } from './lib/printHelp';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { removeTemplate } from './lib/removeTemplate';
+import { execSync } from 'child_process';
 
 export async function main() {
     // Ensure the script runs from its own directory
@@ -18,11 +19,18 @@ export async function main() {
     const isReworkMode = args.includes('--rework');
     const isGenerateMode = args.includes('--generate');
     const isRemoveMode = args.includes('--remove');
+    const isOpenMode = args.includes('--open');
     const specificTemplate = args.find(arg => arg.startsWith('--template='))?.split('=')[1];
     const templateToRemove = args.find(arg => arg.startsWith('--remove='))?.split('=')[1];
 
-    if (isHelp || (args.length > 0 && !isReworkMode && !isGenerateMode && !isRemoveMode && !specificTemplate)) {
+    if (isHelp || (args.length > 0 && !isReworkMode && !isGenerateMode && !isRemoveMode && !isOpenMode && !specificTemplate)) {
         printHelp();
+        return;
+    }
+
+    if (isOpenMode) {
+        console.log(`Opening folder: ${scriptDir}`);
+        execSync(`code ${scriptDir}`, { stdio: 'inherit' });
         return;
     }
 
